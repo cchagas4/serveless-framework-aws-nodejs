@@ -1,0 +1,50 @@
+service: serverless-aws-nodejs-dynamodb
+custom:
+  tableName: 'randomflix-${self:provider.stage}'
+provider:
+  name: aws 
+  runtime: nodejs8.10
+  stage: dev
+  region: us-east-2
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - { "Fn::GetAtt": ["RandomFlixDynamoDBTable", "Arn" ] }
+  environment:
+    RANDOMFLIX_TABLE: ${self:custom.tableName}
+functions:
+  app:
+    handler: app.server
+    events:
+      - http:
+          path: /
+          method: ANY
+          cors: true
+      # - http:
+      #     path: /{proxy+}
+      #     method: ANY
+      #     cors: true
+resources:
+  Resources:
+    RandomFlixDynamoDBTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: videoId
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: videoId
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.tableName}
